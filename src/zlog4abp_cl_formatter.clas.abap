@@ -13,6 +13,24 @@ CLASS zlog4abp_cl_formatter DEFINITION
 
   PUBLIC SECTION.
     CONSTANTS c_placeholder TYPE string VALUE `{}`.
+    "! Appended by SHORTEN( ) when text is cut off
+    CONSTANTS c_ellipsis TYPE string VALUE `...`.
+
+    "! Name of a level, e.g. ERROR
+    "! @parameter i_level | Level, see ZLOG4ABP_IF_LOG=&gt;C_LEVEL
+    "! @parameter r_result | Name; the number as text for unknown levels
+    CLASS-METHODS level_name
+      IMPORTING i_level         TYPE int1
+      RETURNING VALUE(r_result) TYPE string.
+
+    "! Cut text to a maximum length. Text that does not fit ends with C_ELLIPSIS.
+    "! @parameter i_text | Text
+    "! @parameter i_max_length | Maximum length; at least the length of C_ELLIPSIS
+    "! @parameter r_result | Text of at most I_MAX_LENGTH characters
+    CLASS-METHODS shorten
+      IMPORTING i_text          TYPE csequence
+                i_max_length    TYPE i
+      RETURNING VALUE(r_result) TYPE string.
 
     "! @parameter i_json | JSON serializer for structures and tables; a default one if not supplied
     METHODS constructor
@@ -61,6 +79,36 @@ ENDCLASS.
 
 
 CLASS zlog4abp_cl_formatter IMPLEMENTATION.
+
+
+  METHOD level_name.
+    CASE i_level.
+      WHEN zlog4abp_if_log=>c_level-trace.
+        r_result = `TRACE`.
+      WHEN zlog4abp_if_log=>c_level-debug.
+        r_result = `DEBUG`.
+      WHEN zlog4abp_if_log=>c_level-info.
+        r_result = `INFO`.
+      WHEN zlog4abp_if_log=>c_level-warn.
+        r_result = `WARN`.
+      WHEN zlog4abp_if_log=>c_level-error.
+        r_result = `ERROR`.
+      WHEN zlog4abp_if_log=>c_level-off.
+        r_result = `OFF`.
+      WHEN OTHERS.
+        r_result = |{ i_level }|.
+    ENDCASE.
+  ENDMETHOD.
+
+
+  METHOD shorten.
+    DATA(l_max) = nmax( val1 = i_max_length val2 = strlen( c_ellipsis ) ).
+    IF strlen( i_text ) <= l_max.
+      r_result = i_text.
+    ELSE.
+      r_result = substring( val = i_text len = l_max - strlen( c_ellipsis ) ) && c_ellipsis.
+    ENDIF.
+  ENDMETHOD.
 
 
   METHOD constructor.

@@ -9,5 +9,6 @@ project was opened, searched, fetched, copied or translated.
 | SAP standard interfaces: `CL_ABAP_TYPEDESCR` and subclasses, `CL_SYSTEM_UUID`, `CL_ABAP_CONV_IN_CE=>UCCPI`, `CL_ABAP_CHAR_UTILITIES`, `IF_T100_MESSAGE`, FMs `SYSTEM_CALLSTACK` and `GET_JOB_RUNTIME_INFO` | Called by the framework |
 | [abaplint](https://github.com/abaplint/abaplint) `@abaplint/cli` and [abaplint/deps](https://github.com/abaplint/deps) | Static checks for v750 (required by the brief); deps holds stubs of SAP standard objects |
 | [abaplint transpiler](https://github.com/abaplint/transpiler) and [open-abap](https://github.com/open-abap/open-abap) | Running ABAP Unit locally in Node.js; open-abap provides stubs of SAP standard classes |
-| abapGit serialization format (DEVC, INTF, CLAS, TABL, DTEL, DOMA XML) | Repository layout |
+| SAP standard interfaces used only in checks on A4H: `CL_SXML_STRING_READER`, `CL_ABAP_CODEPAGE`, report `RSUSR406` | Validating the reader's JSON output; attempt to regenerate `SAP_ALL` (not used by the framework) |
+| abapGit serialization format (DEVC, INTF, CLAS, TABL, DTEL, DOMA, PROG, SUSO, VIEW XML) | Repository layout |
 | GitHub search, the dotabap.org list and a web search (2026-11-05) | Checking that the names `zlog4abp` / `log4abap` are not taken; only names and search results were viewed |

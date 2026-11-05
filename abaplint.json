@@ -32,7 +32,7 @@
     },
     "object_naming": {
       "patternKind": "required",
-      "clas": "^ZLOG4ABP_CL_",
+      "clas": "^ZLOG4ABP_C[LX]_",
       "intf": "^ZLOG4ABP_IF_",
       "prog": "^ZLOG4ABP_",
       "fugr": "^ZLOG4ABP",
@@ -40,7 +40,8 @@
       "dtel": "^ZLOG4ABP_",
       "doma": "^ZLOG4ABP_",
       "auth": "^ZLOG4ABP",
-      "suso": "^ZLOG4ABP"
+      "suso": "^ZLOG4ABP",
+      "view": "^ZLOG4ABP_"
     },
     "method_parameter_names": {
       "patternKind": "required",
@@ -108,7 +109,7 @@
     "when_others_last": true,
     "identical_conditions": true,
     "avoid_use": { "define": true, "statics": true, "defaultKey": false, "break": true, "testSeams": true, "describeLines": false },
-    "dangerous_statement": { "exclude": ["zlog4abp_cl_appender_event\\.clas\\.abap$"] },
+    "dangerous_statement": { "exclude": ["zlog4abp_cl_appender_event\\.clas\\.abap$", "zlog4abp_cl_cleanup\\.clas\\.abap$"] },
     "forbidden_identifier": false,
     "description_empty": true,
     "abapdoc": false,

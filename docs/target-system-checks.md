@@ -65,6 +65,66 @@ uses data class APPL0, size category 0 (the repository says APPL1, size category
 the same drift: APPL0 on the system, APPL2 in the repository. An abapGit import would create both from
 `src/`.
 
+## Phase 3 on A4H (2026-11-05)
+
+Pushed with vsp: classes `ZLOG4ABP_CL_APPENDER_BAL` and `ZLOG4ABP_CL_APPENDER_JOBLOG` (new) and
+`ZLOG4ABP_CL_FORMATTER` (new methods `LEVEL_NAME( )` and `SHORTEN( )`), each with its test include, through
+`vsp deploy`. All are active. ABAP Unit for the package: **96 passed, 0 failed**.
+
+**Log object.** vsp cannot create application log objects, and abapGit's APLO type does not exist on 7.50.
+At the user's request, `ZLOG4ABP` was inserted into `BALOBJ` and `BALOBJT` (texts E and D: `log4abap`) by a
+`vsp execute` snippet, committed on the service connection. On other systems, create it in SLG0.
+
+Checks run with `vsp execute` against the real application log and tables:
+
+| Check | Result |
+|---|---|
+| A payload above the BAL limit is stored in full, and SLG1 shows a summary with its event ID | Rule `*`/`*` INFO `EVENT,BAL`. One log (number 22225, external ID = run ID `0242AC1100111FE1B6A525CFD304E06A`) with 8 messages: per event a summary line (type I/W/E) and an `Event <id> in ZLOG4ABP_EVENT` line, for the WARN event with `payload of 602 characters`. The 485-character ERROR text came out as 3 lines of at most 200 characters. The 3 event IDs match the rows in `ZLOG4ABP_EVENT`, where the 602-character payload is stored in full. The DEBUG event was not written to BAL. 0 unsaved, 0 dropped |
+| BAL does not commit the caller's open changes | A caller row inserted into `ZLOG4ABP_CONFIG` before logging was invisible to another connection after the ERROR flush (`BAL_DB_SAVE` with `I_2TH_CONNECTION` / `I_2TH_CONNECT_COMMIT`) and was gone after `ROLLBACK WORK`; the BAL log and events stayed |
+| A background job writes its run ID to the job log | Temporary report `ZLOG4ABP_JOBCHECK` in `$TMP` (deleted afterwards), started as job 14580600 with rule `ZLOG4ABP.JOBCHECK`/`*` INFO `EVENT,JOBLOG`. Job log: `log4abap run ID 0242AC1100111FE1B6A529EAA731206A`, then the INFO, WARN and ERROR lines (DEBUG filtered out, ERROR cut to 200 characters with `...`), all type S; the job finished normally. The 3 events of the job in `ZLOG4ABP_EVENT` carry the same run ID. The `ZLOG4ABP_READ` half of this check follows in Phase 4 |
+| A `ZLOG4ABP_CONFIG` change applies to the next session without a transport | The job's rule was committed to the table just before the job started, and the job (a new session) used it. The row was deleted afterwards |
+
+The test log, events and job remain on the system.
+
+**Known limitation:** BAL builds free-text messages from four 50-character message variables, and message
+variables lose trailing blanks. A space that falls exactly at position 50, 100 or 150 of a line therefore
+disappears in SLG1. The full text is in `ZLOG4ABP_EVENT`.
+
+## Phase 4 on A4H (2026-11-05)
+
+Pushed with `vsp deploy`: classes `ZLOG4ABP_CX_NOT_AUTHORIZED`, `ZLOG4ABP_CL_READER` and
+`ZLOG4ABP_CL_CLEANUP` (with test includes) and reports `ZLOG4ABP_READ` and `ZLOG4ABP_CLEANUP`. All are
+active. ABAP Unit for the package: **122 passed, 0 failed**.
+
+**Fixed by activation:** in `ZLOG4ABP_CL_CLEANUP`, `CONNECTION` stood right after `FROM` in two SELECTs.
+SAP requires it after the INTO clause, but abaplint's v750 parser rejects that position. The SELECTs now
+use the default connection, which sees the deletions committed on the service connection; only `DELETE`
+and `COMMIT CONNECTION` use `R/3*ZLOG4ABP`.
+
+Checks run with `vsp execute` against the real table:
+
+| Check | Result |
+|---|---|
+| Authorization is enforced | Before the object existed, `AUTHORITY-CHECK` returned 12 and `READ( )` raised `ZLOG4ABP_CX_NOT_AUTHORIZED` ("No authorization for object ZLOG4ABP_R, activity 03") |
+| Category prefix in SQL | `CATEGORY_RANGE( 'zlog4abp' )` (EQ plus CP `ZLOG4ABP.*`) selected all 9 events of `ZLOG4ABP.SYSCHECK` and `ZLOG4ABP.JOBCHECK` |
+| Output is valid JSON | All 9 events in the table, converted with payload (limit 1000) and split for a width of 255: no physical line above 255 characters, and each event, joined again, parsed with the kernel's JSON reader (`CL_SXML_STRING_READER`). The reader rejected `{"a":` and an unterminated string as a control. The 3002-character payload stored as truncated came out as a JSON string with `payload_truncated` true. (This run used a build in which the blank escape of `SPLIT_LINE( )` was broken; no piece of these events ended with a blank. The escape is fixed and covered by `SPLIT_TRAILING_BLANK`.) |
+
+**Authorization object `ZLOG4ABP_R`.** vsp cannot create authorization objects. At the user's request, a
+`vsp execute` snippet inserted it: `TOBJ` (field `ACTVT`, class `BC_A`), `TOBJT` (E and D), `TACTZ` (03,
+06) and `TOBJVORFLG`, committed on the service connection. DEVELOPER still gets return code 12, because
+the `SAP_ALL` profile was generated before the object existed. `RSUSR406` (regenerate `SAP_ALL`) cannot
+run as a background job: it asks for confirmation and ends with "Action canceled by user". Until
+`SAP_ALL` is regenerated in dialog, or a role grants the object, `ZLOG4ABP_READ` and `ZLOG4ABP_CLEANUP`
+stop with the authorization message. The second half of the job check in brief section 14
+(`ZLOG4ABP_READ` returns the job's run as valid NDJSON from the spool) and a real cleanup run wait for it.
+
+**Also open on A4H:**
+
+- Maintenance view `ZLOG4ABP_CONFIGV` and its generated dialog (SE54); vsp cannot create views. See
+  *Setup* in the README.
+- The selection texts in the two `.prog.xml` files: `vsp deploy` writes the source only, so on A4H the
+  selection screens show the parameter names.
+
 Also confirm on activation:
 
 - Message `00 001` exists. The T100 unit test uses it.
@@ -88,6 +148,23 @@ Also confirm on activation:
   `zlog4abp_cl_factory=>set_max_payload( )`.
 - **Boolean fields:** `HAS_PAYLOAD` and `PAYLOAD_TRUNC` use data element `XFELD`. It holds the same
   values as `ABAP_BOOL`, which is not a DDIC data element.
+- **BAL messages:** The BAL appender writes free text only (`BAL_LOG_MSG_ADD_FREE_TEXT`), also for T100
+  events: the event carries the message key but not its variables, so `BAL_LOG_MSG_ADD` could not rebuild
+  the message. The T100 key is shown on the event reference line instead.
+- **BAL log object:** `ZLOG4ABP` is not in the repository (no abapGit type on 7.50); it is created in SLG0.
 - **Delivery class:** `ZLOG4ABP_CONFIG` has delivery class A, so changes in production are not
-  blocked by client customizing settings. The maintenance view (Phase 4) will have no transport
-  recording.
+  blocked by client customizing settings. The maintenance dialog is generated without transport
+  recording (README, *Setup*).
+- **Maintenance dialog:** The repository holds view `ZLOG4ABP_CONFIGV`, but not the generated function
+  group and table maintenance object. Generated dynpros cannot be written reliably by hand; they are
+  generated in SE54 and then serialized with abapGit.
+- **Authorization:** One object, `ZLOG4ABP_R`, with field `ACTVT` only: 03 to read, 06 to delete. A
+  category field was left out because authorization field values hold at most 40 characters and
+  categories 120.
+- **Exception class:** `ZLOG4ABP_CX_NOT_AUTHORIZED` uses the prefix `ZLOG4ABP_CX_` (abaplint's class
+  naming rule now allows `ZLOG4ABP_CL_` and `ZLOG4ABP_CX_`).
+- **NDJSON in the spool:** Spool lines hold 255 characters, so `ZLOG4ABP_READ` splits long events into
+  continuation lines that start with `+` (README, *Reading events*). Pure NDJSON comes from
+  `ZLOG4ABP_CL_READER=>READ_JSON( )`.
+- **Retention of BAL logs:** `ZLOG4ABP_CLEANUP` deletes events only. BAL logs get their expiry date from
+  the BAL appender (180 days) and are deleted by SLG2.

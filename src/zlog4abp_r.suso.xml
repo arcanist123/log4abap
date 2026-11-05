@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_SUSO" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <TOBJ>
+    <OBJCT>ZLOG4ABP_R</OBJCT>
+    <FIEL1>ACTVT</FIEL1>
+    <OCLSS>BC_A</OCLSS>
+   </TOBJ>
+   <TOBJT>
+    <LANGU>E</LANGU>
+    <OBJECT>ZLOG4ABP_R</OBJECT>
+    <TTEXT>log4abap: read and delete log events</TTEXT>
+   </TOBJT>
+   <TOBJVORFLG>
+    <OBJCT>ZLOG4ABP_R</OBJCT>
+   </TOBJVORFLG>
+   <TACTZ>
+    <TACTZ>
+     <BROBJ>ZLOG4ABP_R</BROBJ>
+     <ACTVT>03</ACTVT>
+    </TACTZ>
+    <TACTZ>
+     <BROBJ>ZLOG4ABP_R</BROBJ>
+     <ACTVT>06</ACTVT>
+    </TACTZ>
+   </TACTZ>
+  </asx:values>
+ </asx:abap>
+</abapGit>

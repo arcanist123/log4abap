@@ -23,6 +23,9 @@ CLASS ltc_formatter DEFINITION FINAL FOR TESTING
     METHODS elementary_to_text FOR TESTING.
     METHODS structure_to_json FOR TESTING.
     METHODS reference_to_text FOR TESTING.
+    METHODS level_names FOR TESTING.
+    METHODS shorten_keeps_short_text FOR TESTING.
+    METHODS shorten_cuts_with_ellipsis FOR TESTING.
 ENDCLASS.
 
 
@@ -112,6 +115,27 @@ CLASS ltc_formatter IMPLEMENTATION.
     cl_abap_unit_assert=>assert_equals( act = m_cut->to_text( l_ref ) exp = `deref` ).
     cl_abap_unit_assert=>assert_equals( act = m_cut->to_text( NEW cx_sy_zerodivide( ) )
                                         exp = NEW cx_sy_zerodivide( )->get_text( ) ).
+  ENDMETHOD.
+
+  METHOD level_names.
+    cl_abap_unit_assert=>assert_equals( act = zlog4abp_cl_formatter=>level_name( zlog4abp_if_log=>c_level-trace )
+                                        exp = `TRACE` ).
+    cl_abap_unit_assert=>assert_equals( act = zlog4abp_cl_formatter=>level_name( zlog4abp_if_log=>c_level-error )
+                                        exp = `ERROR` ).
+    cl_abap_unit_assert=>assert_equals( act = zlog4abp_cl_formatter=>level_name( 9 ) exp = `9` ).
+  ENDMETHOD.
+
+  METHOD shorten_keeps_short_text.
+    cl_abap_unit_assert=>assert_equals( act = zlog4abp_cl_formatter=>shorten( i_text = `abcde` i_max_length = 5 )
+                                        exp = `abcde` ).
+  ENDMETHOD.
+
+  METHOD shorten_cuts_with_ellipsis.
+    cl_abap_unit_assert=>assert_equals( act = zlog4abp_cl_formatter=>shorten( i_text = `abcdefgh` i_max_length = 6 )
+                                        exp = `abc...` ).
+    " The limit never drops below the length of the ellipsis.
+    cl_abap_unit_assert=>assert_equals( act = zlog4abp_cl_formatter=>shorten( i_text = `abcdefgh` i_max_length = 1 )
+                                        exp = `...` ).
   ENDMETHOD.
 
 ENDCLASS.
