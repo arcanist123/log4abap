@@ -108,7 +108,7 @@
     "when_others_last": true,
     "identical_conditions": true,
     "avoid_use": { "define": true, "statics": true, "defaultKey": false, "break": true, "testSeams": true, "describeLines": false },
-    "dangerous_statement": true,
+    "dangerous_statement": { "exclude": ["zlog4abp_cl_appender_event\\.clas\\.abap$"] },
     "forbidden_identifier": false,
     "description_empty": true,
     "abapdoc": false,

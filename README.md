@@ -4,9 +4,11 @@ A Log4j-style logging framework for ABAP 7.50, delivered as an abapGit repositor
 (package `$ZLOG4ABP`, object prefix `ZLOG4ABP_`). The design follows
 [zlog-implementation-brief.md](zlog-implementation-brief.md).
 
-> **Status: Phase 1 (core) only.** The code passes abaplint (v750). On 2026-11-05 it was activated in
-> `$ZLOG4ABP` on the A4H trial system (SAP_BASIS 816, not 7.50), where all 68 ABAP Unit tests passed.
-> The EVENT, BAL and JOBLOG appenders, the event table, the reader and the reports follow in later phases.
+> **Status: Phase 1 (core) and Phase 2 (event store).** The code passes abaplint (v750). On 2026-11-05 it
+> was activated in `$ZLOG4ABP` on the A4H trial system (SAP_BASIS 816, not 7.50), where all 76 ABAP Unit
+> tests passed. The secondary indexes of `ZLOG4ABP_EVENT` are not yet on that system (see
+> [docs/target-system-checks.md](docs/target-system-checks.md)). The BAL and JOBLOG appenders, the reader
+> and the reports follow in later phases.
 
 ## Usage
 
@@ -77,7 +79,21 @@ ABAP has no destructors, and a short dump loses everything still buffered in app
 ERROR events flush their logger's appenders immediately. Long-running programs and jobs
 should call `zlog4abp_cl_factory=>flush_all( )` at the end and at milestones.
 
-## Objects (Phase 1)
+## Event store
+
+Appender `EVENT` writes complete events, including the JSON payload, to table `ZLOG4ABP_EVENT`.
+
+- Events are buffered and written when the buffer holds 50 events, after every ERROR, and on
+  `flush( )` / `flush_all( )`. Change the size with
+  `CAST zlog4abp_cl_appender_event( zlog4abp_cl_factory=>get_appender( 'EVENT' ) )->set_buffer_size( n )`.
+- Rows are inserted and committed through service connection `R/3*ZLOG4ABP`. Logging never commits
+  the caller's open changes, and the caller's `ROLLBACK WORK` does not remove events that were written.
+- If a write fails, the buffered events are dropped and counted (`get_dropped_count( )`). The
+  appender does not retry and never logs through the framework.
+- `MSG_TEXT` keeps the first 1333 characters of the message. Payloads above the logger's limit
+  (default 1 MB) are cut off and marked with `PAYLOAD_TRUNC`; `PAYLOAD_LEN` holds the original length.
+
+## Objects
 
 | Object | Purpose |
 |---|---|
@@ -91,9 +107,11 @@ should call `zlog4abp_cl_factory=>flush_all( )` at the end and at milestones.
 | `ZLOG4ABP_CL_FORMATTER` | `{}` formatting, value conversion, T100 text |
 | `ZLOG4ABP_CL_JSON` | The only JSON writer (RTTI-based) |
 | `ZLOG4ABP_CL_APPENDER_MEMORY` | In-memory appender for unit tests |
+| `ZLOG4ABP_CL_APPENDER_EVENT` | Appender for `ZLOG4ABP_EVENT` (Phase 2) |
 | `ZLOG4ABP_CONFIG` | Configuration table |
+| `ZLOG4ABP_EVENT` | Event and payload table, indexes Z01-Z03 (Phase 2) |
 | `ZLOG4ABP_S_EVENT` | Event structure passed to appenders |
-| `ZLOG4ABP_LEVEL`, `_CATEGORY`, `_APPENDERS`, `_SOURCE_POS`, `_JSON`, `_TEXT` | Domains / data elements |
+| `ZLOG4ABP_LEVEL`, `_CATEGORY`, `_APPENDERS`, `_SOURCE_POS`, `_JSON`, `_TEXT`, `_MSG_TEXT` | Domains / data elements |
 
 ## Local checks
 

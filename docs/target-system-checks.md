@@ -39,6 +39,32 @@ All 20 objects are active in `$ZLOG4ABP`, and ABAP Unit for the package passed: 
   offline repository) and diff the result against `src/`, to show that the repository files match what abapGit
   writes.
 
+## Phase 2 on A4H (2026-11-05)
+
+Pushed with vsp: data element `ZLOG4ABP_MSG_TEXT` and table `ZLOG4ABP_EVENT` through the MCP tool `SAP`
+(action create), class `ZLOG4ABP_CL_APPENDER_EVENT` with its test include through `vsp deploy`. All are active.
+ABAP Unit for the package: **76 passed, 0 failed**.
+
+Transaction checks (brief section 14), run with `vsp execute` against the real table. The snippet logged
+three events through the factory (default rule, so WARN and above), with an open `INSERT` into
+`ZLOG4ABP_CONFIG` on the default connection, and called `ROLLBACK WORK` after the ERROR flush:
+
+| Check | Result |
+|---|---|
+| Logging does not commit the caller's open changes | After the flush, the service connection saw 0 of the caller's uncommitted rows; after `ROLLBACK WORK` the row was gone |
+| The caller's `ROLLBACK WORK` keeps flushed events | All 3 events of the run were still in `ZLOG4ABP_EVENT`; 0 dropped |
+| A payload above the BAL limit is stored in full | 600-character string: `PAYLOAD_LEN` 602, full JSON stored, `PAYLOAD_TRUNC` initial |
+| An oversized payload sets the truncation fields | Limit 1000, 3000-character string: `PAYLOAD_LEN` 3002, `PAYLOAD_TRUNC` = X |
+
+The three test events (category `ZLOG4ABP.SYSCHECK`, run `0242AC1100111FE1B6A0B6F5A152A06A`) remain in the
+table. The SLG1 half of the BAL check follows with the BAL appender in Phase 3.
+
+**Open: indexes and technical settings.** vsp creates tables from DDL source and has no way to create
+secondary indexes or set technical settings. On A4H, `ZLOG4ABP_EVENT` therefore has no indexes Z01-Z03 and
+uses data class APPL0, size category 0 (the repository says APPL1, size category 4). `ZLOG4ABP_CONFIG` has
+the same drift: APPL0 on the system, APPL2 in the repository. An abapGit import would create both from
+`src/`.
+
 Also confirm on activation:
 
 - Message `00 001` exists. The T100 unit test uses it.
