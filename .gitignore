@@ -1,0 +1,6 @@
+node_modules/
+/deps/
+/output/
+# SAP logon data (credentials) - never commit
+.env.sap
+.mcp.json

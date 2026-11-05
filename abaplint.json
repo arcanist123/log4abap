@@ -1,0 +1,126 @@
+{
+  "global": {
+    "files": "/src/**/*.*",
+    "exclude": [],
+    "noIssues": []
+  },
+  "dependencies": [
+    {
+      "url": "https://github.com/abaplint/deps",
+      "folder": "/deps",
+      "files": "/src/**/*.*"
+    }
+  ],
+  "syntax": {
+    "version": "v750",
+    "errorNamespace": "^(ZLOG4ABP_|LCL_|LTC_|LTD_|TY_|LIF_)",
+    "globalConstants": [],
+    "globalMacros": []
+  },
+  "rules": {
+    "check_syntax": true,
+    "parser_error": true,
+    "unknown_types": true,
+    "check_ddic": true,
+    "xml_consistency": true,
+    "implement_methods": true,
+    "method_implemented_twice": true,
+    "cyclic_oo": false,
+    "downport": false,
+    "allowed_object_types": {
+      "allowed": ["DEVC", "INTF", "CLAS", "TABL", "DTEL", "DOMA", "PROG", "TOBJ", "FUGR", "SUSO", "AUTH", "VIEW"]
+    },
+    "object_naming": {
+      "patternKind": "required",
+      "clas": "^ZLOG4ABP_CL_",
+      "intf": "^ZLOG4ABP_IF_",
+      "prog": "^ZLOG4ABP_",
+      "fugr": "^ZLOG4ABP",
+      "tabl": "^ZLOG4ABP_",
+      "dtel": "^ZLOG4ABP_",
+      "doma": "^ZLOG4ABP_",
+      "auth": "^ZLOG4ABP",
+      "suso": "^ZLOG4ABP"
+    },
+    "method_parameter_names": {
+      "patternKind": "required",
+      "ignoreExceptions": true,
+      "importing": "^I_.+$",
+      "returning": "^R_.+$",
+      "changing": "^C_.+$",
+      "exporting": "^E_.+$"
+    },
+    "class_attribute_names": {
+      "patternKind": "required",
+      "ignoreExceptions": true,
+      "ignoreLocal": false,
+      "ignoreInterfaces": false,
+      "statics": "^G_.+$",
+      "instance": "^M_.+$",
+      "constants": "^C_.+$"
+    },
+    "local_variable_names": {
+      "patternKind": "required",
+      "expectedData": "^(L_.+|[A-Z][A-Z0-9]*)$",
+      "expectedConstant": "^(LC|C)_.+$",
+      "expectedFS": "^<(L_.+|[A-Z][A-Z0-9]*)>$"
+    },
+    "types_naming": { "pattern": "^TY_.+$" },
+    "local_class_naming": {
+      "patternKind": "required",
+      "local": "^LCL_.+$",
+      "exception": "^LCX_.+$",
+      "test": "^LT(C|D)_.+$"
+    },
+    "keyword_case": { "style": "upper", "ignoreExceptions": true, "ignoreLowerClassImplmentationStatement": true },
+    "line_length": { "length": 120 },
+    "indentation": true,
+    "sequential_blank": { "lines": 4 },
+    "definitions_top": false,
+    "obsolete_statement": true,
+    "use_new": true,
+    "prefer_xsdbool": true,
+    "prefer_is_not": true,
+    "functional_writing": true,
+    "omit_receiving": true,
+    "exporting": true,
+    "select_add_order_by": false,
+    "unused_variables": true,
+    "unused_types": true,
+    "unused_methods": true,
+    "unreachable_code": true,
+    "uncaught_exception": true,
+    "local_testclass_consistency": true,
+    "add_test_attributes": true,
+    "superclass_final": true,
+    "no_public_attributes": true,
+    "constant_classes": false,
+    "contains_tab": true,
+    "whitespace_end": true,
+    "final_newline": true,
+    "empty_statement": true,
+    "space_before_dot": true,
+    "double_space": true,
+    "colon_missing_space": true,
+    "begin_end_names": true,
+    "check_subrc": true,
+    "try_without_catch": true,
+    "when_others_last": true,
+    "identical_conditions": true,
+    "avoid_use": { "define": true, "statics": true, "defaultKey": false, "break": true, "testSeams": true, "describeLines": false },
+    "dangerous_statement": true,
+    "forbidden_identifier": false,
+    "description_empty": true,
+    "abapdoc": false,
+    "abapdoc_parameter_names": true,
+    "abapdoc_html_tag": true,
+    "commented_code": true,
+    "check_comments": false,
+    "strict_sql": true,
+    "sql_escape_host_variables": true,
+    "db_operation_in_loop": true,
+    "use_line_exists": true,
+    "prefer_inline": false,
+    "unnecessary_return": false
+  }
+}
